@@ -1,4 +1,4 @@
---[[ khanhly
+--[[
   _       _    _          _   _ _   _   __     __  _    _ _____ 
  | |     | |  | |   /\   | \ | | \ | |  \ \   / / | |  | |_   _|
  | |     | |  | |  /  \  |  \| |  \| |   \ \_/ /  | |  | | | |  
@@ -302,7 +302,7 @@ function LuannyUi:CreateWindow(config)
         Transparent = config.Transparent or false,
         Theme = config.Theme or "Dark",
         ShowWindow = config.ShowWindow == nil and true or config.ShowWindow,
-        BackgroundImage = config.BackgroundImage,
+        BackgroundImage = config.BackgroundImage,      -- asset id or "rbxassetid://..."
         BackgroundTransparency = config.BackgroundTransparency or 0
     }
 
@@ -319,22 +319,7 @@ function LuannyUi:CreateWindow(config)
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling 
     ScreenGui.Parent = CoreGui
 
-    -- Background Image (nếu có)
-    if WindowConfig.BackgroundImage then
-        local bgImage = Instance.new("ImageLabel", ScreenGui)
-        bgImage.Size = UDim2.new(1, 0, 1, 0)
-        bgImage.BackgroundTransparency = 1
-        bgImage.ZIndex = 0
-        if tonumber(WindowConfig.BackgroundImage) then
-            bgImage.Image = "rbxassetid://" .. tostring(WindowConfig.BackgroundImage)
-        elseif type(WindowConfig.BackgroundImage) == "string" and WindowConfig.BackgroundImage:match("^rbxassetid://") then
-            bgImage.Image = WindowConfig.BackgroundImage
-        else
-            bgImage.Image = WindowConfig.BackgroundImage
-        end
-        bgImage.ImageTransparency = WindowConfig.BackgroundTransparency
-        bgImage.ScaleType = Enum.ScaleType.Fit
-    end
+    -- Không còn tạo ImageLabel ở đây nữa
 
     Overlay = Instance.new("Frame", ScreenGui)
     Overlay.Size = UDim2.new(1, 0, 1, 0)
@@ -530,11 +515,43 @@ function LuannyUi:Tab(options)
     tl.Size = UDim2.new(1, 0, 0, 45); tl.BackgroundTransparency = 1; tl.Text = titleName; tl.TextColor3 = Color3.fromRGB(255, 255, 255); tl.FontFace = FontUI; tl.TextSize = 22; tl.ZIndex = 11
     RegisterText(tl)
 
+    -- ScrollingFrame (container chính của tab)
     local container = Instance.new("ScrollingFrame", frame)
     container.Size = UDim2.new(1, 0, 1, -50); container.Position = UDim2.new(0, 0, 0, 45); container.BackgroundTransparency = 1; container.ScrollBarThickness = 0; container.ZIndex = 11
+    container.ClipsDescendants = true   -- Quan trọng: giữ ảnh nền không bị tràn ra ngoài
+    
     local layout = Instance.new("UIListLayout", container)
     layout.HorizontalAlignment = Enum.HorizontalAlignment.Center; layout.SortOrder = Enum.SortOrder.LayoutOrder; layout.Padding = UDim.new(0, 8)
-    Instance.new("UIPadding", container).PaddingTop = UDim.new(0, 5)
+    local padding = Instance.new("UIPadding", container)
+    padding.PaddingTop = UDim.new(0, 5)
+
+    -- Background Image cho tab (nếu có)
+    local bgImage = nil
+    if WindowConfig.BackgroundImage then
+        bgImage = Instance.new("ImageLabel", container)
+        bgImage.Size = UDim2.new(1, 0, 1, 0)
+        bgImage.BackgroundTransparency = 1
+        bgImage.ZIndex = 0
+        if tonumber(WindowConfig.BackgroundImage) then
+            bgImage.Image = "rbxassetid://" .. tostring(WindowConfig.BackgroundImage)
+        elseif type(WindowConfig.BackgroundImage) == "string" and WindowConfig.BackgroundImage:match("^rbxassetid://") then
+            bgImage.Image = WindowConfig.BackgroundImage
+        else
+            bgImage.Image = WindowConfig.BackgroundImage
+        end
+        bgImage.ImageTransparency = WindowConfig.BackgroundTransparency
+        bgImage.ScaleType = Enum.ScaleType.Fit
+        
+        -- Cập nhật kích thước ảnh khi canvas thay đổi (để ảnh phủ hết nội dung cuộn)
+        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            local contentHeight = layout.AbsoluteContentSize.Y + 20
+            bgImage.Size = UDim2.new(1, 0, 0, contentHeight)
+        end)
+        -- Khởi tạo lần đầu
+        task.wait() -- đợi layout tính toán
+        local contentHeight = layout.AbsoluteContentSize.Y + 20
+        bgImage.Size = UDim2.new(1, 0, 0, contentHeight)
+    end
 
     layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         container.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
@@ -591,7 +608,7 @@ function TabClass:Button(options)
     card.Text = ""
     card.AutoButtonColor = false
     card.LayoutOrder = self.ItemCount
-    card.ZIndex = 12
+    card.ZIndex = 2
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
     local stroke = Instance.new("UIStroke", card)
     stroke.Color = isLight and Color3.fromRGB(180, 180, 185) or Color3.fromRGB(0, 180, 255)
@@ -662,7 +679,7 @@ function TabClass:Toggle(options)
     card.Text = ""
     card.AutoButtonColor = false
     card.LayoutOrder = self.ItemCount
-    card.ZIndex = 12
+    card.ZIndex = 2
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
     local stroke = Instance.new("UIStroke", card)
     stroke.Color = isLight and Color3.fromRGB(180, 180, 185) or Color3.fromRGB(0, 180, 255)
@@ -739,6 +756,7 @@ function TabClass:Input(options)
     card.BackgroundColor3 = isLight and Color3.fromRGB(220, 220, 225) or Color3.fromRGB(18, 25, 35)
     card.BackgroundTransparency = isLight and (WindowConfig.Transparent and 0.2 or 0) or 0.15
     card.LayoutOrder = self.ItemCount
+    card.ZIndex = 2
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
     local stroke = Instance.new("UIStroke", card)
     stroke.Color = isLight and Color3.fromRGB(180, 180, 185) or Color3.fromRGB(0, 180, 255)
@@ -799,7 +817,7 @@ function TabClass:Dropdown(options)
     card.BackgroundTransparency = isLight and (WindowConfig.Transparent and 0.2 or 0) or 0.15
     card.ClipsDescendants = true
     card.LayoutOrder = self.ItemCount
-    card.ZIndex = 12
+    card.ZIndex = 2
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
     local stroke = Instance.new("UIStroke", card)
     stroke.Color = isLight and Color3.fromRGB(180, 180, 185) or Color3.fromRGB(0, 180, 255)
@@ -881,6 +899,7 @@ function TabClass:Paragraph(options)
     card.BackgroundTransparency = isLight and (WindowConfig.Transparent and 0.2 or 0) or 0.15
     card.LayoutOrder = self.ItemCount
     if options.Locked then card.BackgroundTransparency = 0.6 end
+    card.ZIndex = 2
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
     
     local stroke = Instance.new("UIStroke", card)
@@ -947,6 +966,7 @@ function TabClass:Slider(options)
     card.BackgroundColor3 = isLight and Color3.fromRGB(220, 220, 225) or Color3.fromRGB(18, 25, 35)
     card.BackgroundTransparency = isLight and (WindowConfig.Transparent and 0.2 or 0) or 0.15
     card.LayoutOrder = self.ItemCount
+    card.ZIndex = 2
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
     local stroke = Instance.new("UIStroke", card)
     stroke.Color = isLight and Color3.fromRGB(180, 180, 185) or Color3.fromRGB(0, 180, 255)

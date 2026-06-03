@@ -12,8 +12,8 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = (type(gethui) == "function" and gethui()) or (pcall(function() return game:GetService("CoreGui") end) and game:GetService("CoreGui")) or Players.LocalPlayer:WaitForChild("PlayerGui")
 
-local LuannyUi = {}
-LuannyUi.__index = LuannyUi
+local Khanhly = {}
+Khanhly.__index = Khanhly
 
 -- Màu chủ đạo xanh kim nước biển
 local DiamondBlue = Color3.fromRGB(0, 255, 255)
@@ -28,12 +28,12 @@ local successIcons, Lucide = pcall(function()
 end)
 local Icons = (successIcons and type(Lucide) == "table") and Lucide or setmetatable({}, {__index = function() return "" end})
 
-if CoreGui:FindFirstChild("LuannyNotifyScreen") then
-    CoreGui.LuannyNotifyScreen:Destroy()
+if CoreGui:FindFirstChild("KhanhlyNotifyScreen") then
+    CoreGui.KhanhlyNotifyScreen:Destroy()
 end
 
 local NotifyScreen = Instance.new("ScreenGui")
-NotifyScreen.Name = "LuannyNotifyScreen"
+NotifyScreen.Name = "KhanhlyNotifyScreen"
 NotifyScreen.IgnoreGuiInset = true
 NotifyScreen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 NotifyScreen.Parent = CoreGui
@@ -50,7 +50,7 @@ ListLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
 ListLayout.Padding = UDim.new(0, 10)
 
-function LuannyUi:Notify(options)
+function Khanhly:Notify(options)
     local titleText = options.Title or "Notification"
     local descText = options.Desc or ""
     local duration = options.Duration or 5
@@ -190,7 +190,7 @@ function LuannyUi:Notify(options)
     end)
 end
 
-function LuannyUi:SetFont(fontAsset)
+function Khanhly:SetFont(fontAsset)
     if typeof(fontAsset) == "string" then
         FontUI = Font.new(fontAsset, Enum.FontWeight.Medium, Enum.FontStyle.Normal)
         FontTitle = Font.new(fontAsset, Enum.FontWeight.Bold, Enum.FontStyle.Normal)
@@ -317,26 +317,26 @@ local function ToggleWindow(target, windowHeight)
     end
 end
 
-function LuannyUi:CreateWindow(config)
+function Khanhly:CreateWindow(config)
     if Initialized then return self end
     Initialized = true
 
     WindowConfig = {
-        Title = config.Title or "Luanny UI",
+        Title = config.Title or "Khanhly UI",
         Author = config.Author or "Snow",
         Transparent = config.Transparent or false,
         Theme = config.Theme or "Dark",
         ShowWindow = config.ShowWindow == nil and true or config.ShowWindow
     }
 
-    if CoreGui:FindFirstChild("LuannyUI") then CoreGui.LuannyUI:Destroy() end
+    if CoreGui:FindFirstChild("KhanhlyUI") then CoreGui.KhanhlyUI:Destroy() end
 
     local bgColor = WindowConfig.Theme == "Light" and Color3.fromRGB(240, 240, 240) or Color3.fromRGB(15, 15, 15)
     local strokeColor = WindowConfig.Theme == "Light" and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(45, 45, 45)
     local bgAlpha = WindowConfig.Transparent and 0.25 or 0
 
     ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "LuannyUI"
+    ScreenGui.Name = "KhanhlyUI"
     ScreenGui.IgnoreGuiInset = true 
     ScreenGui.ResetOnSpawn = false
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling 
@@ -476,8 +476,8 @@ end
 local TabClass = {}
 TabClass.__index = TabClass
 
-function LuannyUi:Tab(options)
-    if not Initialized then self:CreateWindow({Title = "Luanny UI", Author = "Unknown"}) end
+function Khanhly:Tab(options)
+    if not Initialized then self:CreateWindow({Title = "Khanhly UI", Author = "Unknown"}) end
     LayoutOrderCount = LayoutOrderCount + 1
 
     local titleName = options.Title or "Tab"
@@ -1319,4 +1319,4 @@ function TabClass:Slider(options)
     }
 end
 
-return LuannyUi
+return Khanhly

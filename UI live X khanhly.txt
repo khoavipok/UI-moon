@@ -319,8 +319,6 @@ function LuannyUi:CreateWindow(config)
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling 
     ScreenGui.Parent = CoreGui
 
-    -- Không còn tạo ImageLabel ở đây nữa
-
     Overlay = Instance.new("Frame", ScreenGui)
     Overlay.Size = UDim2.new(1, 0, 1, 0)
     Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -495,7 +493,7 @@ function LuannyUi:Tab(options)
     maskFrame.Position = UDim2.new(0.5, 0, 1, -72)
     maskFrame.Size = UDim2.new(0, 380, 0, windowHeight)
     maskFrame.BackgroundTransparency = 1
-    maskFrame.ClipsDescendants = true
+    maskFrame.ClipsDescendants = true   -- clip viền cửa sổ
     maskFrame.Visible = false
     maskFrame.ZIndex = 10
     maskFrame:SetAttribute("Height", windowHeight)
@@ -511,25 +509,11 @@ function LuannyUi:Tab(options)
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
     Instance.new("UIStroke", frame).Color = winStrokeColor
     
-    local tl = Instance.new("TextLabel", frame)
-    tl.Size = UDim2.new(1, 0, 0, 45); tl.BackgroundTransparency = 1; tl.Text = titleName; tl.TextColor3 = Color3.fromRGB(255, 255, 255); tl.FontFace = FontUI; tl.TextSize = 22; tl.ZIndex = 11
-    RegisterText(tl)
-
-    -- ScrollingFrame (container chính của tab)
-    local container = Instance.new("ScrollingFrame", frame)
-    container.Size = UDim2.new(1, 0, 1, -50); container.Position = UDim2.new(0, 0, 0, 45); container.BackgroundTransparency = 1; container.ScrollBarThickness = 0; container.ZIndex = 11
-    container.ClipsDescendants = true   -- Quan trọng: giữ ảnh nền không bị tràn ra ngoài
-    
-    local layout = Instance.new("UIListLayout", container)
-    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center; layout.SortOrder = Enum.SortOrder.LayoutOrder; layout.Padding = UDim.new(0, 8)
-    local padding = Instance.new("UIPadding", container)
-    padding.PaddingTop = UDim.new(0, 5)
-
-    -- Background Image cho tab (nếu có)
-    local bgImage = nil
+    -- Background Image (nếu có) - đặt trong frame, layer dưới cùng
     if WindowConfig.BackgroundImage then
-        bgImage = Instance.new("ImageLabel", container)
+        local bgImage = Instance.new("ImageLabel", frame)
         bgImage.Size = UDim2.new(1, 0, 1, 0)
+        bgImage.Position = UDim2.new(0, 0, 0, 0)
         bgImage.BackgroundTransparency = 1
         bgImage.ZIndex = 0
         if tonumber(WindowConfig.BackgroundImage) then
@@ -540,18 +524,28 @@ function LuannyUi:Tab(options)
             bgImage.Image = WindowConfig.BackgroundImage
         end
         bgImage.ImageTransparency = WindowConfig.BackgroundTransparency
-        bgImage.ScaleType = Enum.ScaleType.Fit
-        
-        -- Cập nhật kích thước ảnh khi canvas thay đổi (để ảnh phủ hết nội dung cuộn)
-        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            local contentHeight = layout.AbsoluteContentSize.Y + 20
-            bgImage.Size = UDim2.new(1, 0, 0, contentHeight)
-        end)
-        -- Khởi tạo lần đầu
-        task.wait() -- đợi layout tính toán
-        local contentHeight = layout.AbsoluteContentSize.Y + 20
-        bgImage.Size = UDim2.new(1, 0, 0, contentHeight)
+        bgImage.ScaleType = Enum.ScaleType.Crop   -- phủ kín khung
     end
+
+    local tl = Instance.new("TextLabel", frame)
+    tl.Size = UDim2.new(1, 0, 0, 45); tl.BackgroundTransparency = 1; tl.Text = titleName; tl.TextColor3 = Color3.fromRGB(255, 255, 255); tl.FontFace = FontUI; tl.TextSize = 22; tl.ZIndex = 11
+    RegisterText(tl)
+
+    -- ScrollingFrame (container chính của tab)
+    local container = Instance.new("ScrollingFrame", frame)
+    container.Size = UDim2.new(1, 0, 1, -50)
+    container.Position = UDim2.new(0, 0, 0, 45)
+    container.BackgroundTransparency = 1
+    container.ScrollBarThickness = 0
+    container.ZIndex = 2          -- cao hơn background
+    container.ClipsDescendants = false   -- không clip nội dung bên trong, để dropdown không bị cắt
+    
+    local layout = Instance.new("UIListLayout", container)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 8)
+    local padding = Instance.new("UIPadding", container)
+    padding.PaddingTop = UDim.new(0, 5)
 
     layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         container.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
@@ -572,6 +566,7 @@ function TabClass:Section(options)
     sectionFrame.Size = UDim2.new(0, 340, 0, 30)
     sectionFrame.BackgroundTransparency = 1
     sectionFrame.LayoutOrder = self.ItemCount
+    sectionFrame.ZIndex = 2
     
     local lbl = Instance.new("TextLabel", sectionFrame)
     lbl.Size = UDim2.new(1, -10, 1, 0)
@@ -815,7 +810,7 @@ function TabClass:Dropdown(options)
     -- Glass effect
     card.BackgroundColor3 = isLight and Color3.fromRGB(220, 220, 225) or Color3.fromRGB(18, 25, 35)
     card.BackgroundTransparency = isLight and (WindowConfig.Transparent and 0.2 or 0) or 0.15
-    card.ClipsDescendants = true
+    card.ClipsDescendants = false   -- quan trọng: không clip dropdown mở rộng
     card.LayoutOrder = self.ItemCount
     card.ZIndex = 2
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
@@ -827,7 +822,8 @@ function TabClass:Dropdown(options)
     local textOffset = options.Icon and 35 or 10
 
     if options.Icon then
-        local ic = Instance.new("ImageLabel", card); ic.Size = UDim2.new(0, 18, 0, 18); ic.Position = UDim2.new(0, 10, 0, 10); ic.BackgroundTransparency = 1; ic.Image = Icons[options.Icon] or ""; ic.ImageColor3 = Color3.fromRGB(255, 255, 255); ic.ZIndex = 13
+        local ic = Instance.new("ImageLabel", card)
+        ic.Size = UDim2.new(0, 18, 0, 18); ic.Position = UDim2.new(0, 10, 0, 10); ic.BackgroundTransparency = 1; ic.Image = Icons[options.Icon] or ""; ic.ImageColor3 = Color3.fromRGB(255, 255, 255); ic.ZIndex = 13
     end
 
     local lblTitle = Instance.new("TextLabel", card)
@@ -848,6 +844,7 @@ function TabClass:Dropdown(options)
 
     local listFrame = Instance.new("ScrollingFrame", card)
     listFrame.Size = UDim2.new(1, -20, 0, 0); listFrame.Position = UDim2.new(0, 10, 0, 60); listFrame.BackgroundTransparency = 1; listFrame.ScrollBarThickness = 2; listFrame.ZIndex = 14
+    listFrame.ClipsDescendants = true   -- chỉ clip bên trong list, không ảnh hưởng đến card
     local listLayout = Instance.new("UIListLayout", listFrame)
     listLayout.SortOrder = Enum.SortOrder.LayoutOrder; listLayout.Padding = UDim.new(0, 4)
 
@@ -872,7 +869,8 @@ function TabClass:Dropdown(options)
         if lockOverlay.Visible then return end
         isOpen = not isOpen
         local targetHeight = isOpen and math.min(60 + (#optionList * 29), 160) or 60
-        listFrame.Size = UDim2.new(1, -20, 0, targetHeight - 65)
+        -- Sửa công thức: chiều cao list frame = targetHeight - 60 (vì card gốc cao 60)
+        listFrame.Size = UDim2.new(1, -20, 0, targetHeight - 60)
         listFrame.CanvasSize = UDim2.new(0, 0, 0, #optionList * 29)
         TweenService:Create(arrow, TweenInfo.new(0.3), {Rotation = isOpen and 180 or 0}):Play()
         TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 340, 0, targetHeight)}):Play()

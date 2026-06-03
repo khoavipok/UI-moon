@@ -1,4 +1,4 @@
---[[
+--[[ khanhly
   _       _    _          _   _ _   _   __     __  _    _ _____ 
  | |     | |  | |   /\   | \ | | \ | |  \ \   / / | |  | |_   _|
  | |     | |  | |  /  \  |  \| |  \| |   \ \_/ /  | |  | | | |  
@@ -301,7 +301,9 @@ function LuannyUi:CreateWindow(config)
         Author = config.Author or "Snow",
         Transparent = config.Transparent or false,
         Theme = config.Theme or "Dark",
-        ShowWindow = config.ShowWindow == nil and true or config.ShowWindow
+        ShowWindow = config.ShowWindow == nil and true or config.ShowWindow,
+        BackgroundImage = config.BackgroundImage,
+        BackgroundTransparency = config.BackgroundTransparency or 0
     }
 
     if CoreGui:FindFirstChild("LuannyUI") then CoreGui.LuannyUI:Destroy() end
@@ -316,6 +318,23 @@ function LuannyUi:CreateWindow(config)
     ScreenGui.ResetOnSpawn = false
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling 
     ScreenGui.Parent = CoreGui
+
+    -- Background Image (nếu có)
+    if WindowConfig.BackgroundImage then
+        local bgImage = Instance.new("ImageLabel", ScreenGui)
+        bgImage.Size = UDim2.new(1, 0, 1, 0)
+        bgImage.BackgroundTransparency = 1
+        bgImage.ZIndex = 0
+        if tonumber(WindowConfig.BackgroundImage) then
+            bgImage.Image = "rbxassetid://" .. tostring(WindowConfig.BackgroundImage)
+        elseif type(WindowConfig.BackgroundImage) == "string" and WindowConfig.BackgroundImage:match("^rbxassetid://") then
+            bgImage.Image = WindowConfig.BackgroundImage
+        else
+            bgImage.Image = WindowConfig.BackgroundImage
+        end
+        bgImage.ImageTransparency = WindowConfig.BackgroundTransparency
+        bgImage.ScaleType = Enum.ScaleType.Fit
+    end
 
     Overlay = Instance.new("Frame", ScreenGui)
     Overlay.Size = UDim2.new(1, 0, 1, 0)
